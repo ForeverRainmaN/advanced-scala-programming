@@ -15,7 +15,7 @@ object Recap {
 
   // types: Int, String, Double, Boolean, Char
   // Unit = () == "void" in other languages
-//   val theUnit = println("Hello, Scala!")
+  //   val theUnit = println("Hello, Scala!")
 
   def aFunction(x: Int): Int = x + 1
 
@@ -27,6 +27,7 @@ object Recap {
     else factorial(n - 1, n * acc)
 
   class Animal
+
   class Dog extends Animal
 
   val aDog: Animal = new Dog
@@ -50,6 +51,7 @@ object Recap {
   val aCarnivore: Unit = {
     infix def eat(a: Animal): Unit = println("I'm a carnivore")
   }
+
   // generics
   abstract class LList[A] {
     // type A is known inside the implementation
@@ -92,16 +94,16 @@ object Recap {
   val annonymousIncrementer = (x: Int) => x + 1
 
   // hofs = higher-order functions
-  val anIncrementedList = List(1,2,3).map(annonymousIncrementer)
+  val anIncrementedList = List(1, 2, 3).map(annonymousIncrementer)
 
   // for-comprehensions
 
   val pairs = for {
-    number <- List(1,2,3)
+    number <- List(1, 2, 3)
     char <- List("a", "b")
   } yield s"$number-$char"
 
-  val pairs2 = List(1,2,3).flatMap((x) => List("a", "b").map((y) => s"$x-$y"))
+  val pairs2 = List(1, 2, 3).flatMap((x) => List("a", "b").map((y) => s"$x-$y"))
 
   // Scala collections: Seqs, Arrays, Lists, Vectors, Maps, Tuples, Sets
 
@@ -116,16 +118,17 @@ object Recap {
   }
 
   val bob = Person("Bob", 22)
+  
   val gereeting = bob match {
     case Person(n, _) => s"Hi, my name is $n"
     case _ => "Not important"
   }
 
   // identation tokens
-  class BracelessAnimal: 
+  class BracelessAnimal:
     def eat(): Unit = {
-        println("I am eating")
-        println("I am Doing Something")
+      println("I am eating")
+      println("I am Doing Something")
     }
 
   def main(args: Array[String]): Unit = {

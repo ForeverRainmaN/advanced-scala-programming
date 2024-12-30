@@ -69,9 +69,9 @@ object DarkSugars {
 
   // 5 - infix types
   @targetName("Arrow") // for more readable bytecode + Java interop
-  infix class -->[A, B]
+//  infix class -->[A, B]
 
-  val compositeType: Int --> String = new-->[Int, String]
+//  val compositeType: Int --> String = new -->[Int, String]
 
   // 6 - update()
   val anArray = Array(1, 2, 3, 4)
@@ -103,9 +103,5 @@ object DarkSugars {
   val callWithTwoArgs = methodsWithVarargs(2, 25)
 
   val aCollection = List(1, 2, 3, 4)
-  val callWithDynamicArgs = methodsWithVarargs(aCollection*)
-
-  def main(args: Array[String]): Unit = {
-
-  }
+  val callWithDynamicArgs = methodsWithVarargs(aCollection *)
 }

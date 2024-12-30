@@ -108,8 +108,4 @@ object AdvancedPatternMatching {
     case PersonWrapper(name) => s"Hey, my name is $name"
   }
 
-  def main(args: Array[String]): Unit = {
-
-  }
-
 }
