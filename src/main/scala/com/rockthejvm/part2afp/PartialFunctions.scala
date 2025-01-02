@@ -1,4 +1,4 @@
-package part2afp
+package com.rockthejvm.part2afp
 
 object PartialFunctions {
 
