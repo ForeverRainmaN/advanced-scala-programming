@@ -2,7 +2,7 @@ package com.rockthejvm.practice
 
 import scala.annotation.{tailrec, targetName}
 
-abstract class FSet[A] extends (A => Boolean) {
+private abstract class FSet[A] extends (A => Boolean) {
   def contains(elem: A): Boolean
 
   def apply(elem: A): Boolean = contains(elem)
