@@ -9,9 +9,9 @@ abstract class LzList[A] {
 
   def tail: LzList[A]
 
-  infix def #::(element: A): LzList[A] // prepending
+  def #::(element: A): LzList[A] // prepending
 
-  def ++(another: LzList[A]): LzList[A] // TODO warning
+  infix def ++(another: => LzList[A]): LzList[A] // TODO warning
 
   def foreach(f: A => Unit): Unit
 
@@ -46,9 +46,9 @@ case class LzEmpty[A]() extends LzList[A] {
 
   override def tail: LzList[A] = throw new NoSuchElementException("No tail")
 
-  override infix def #::(element: A): LzList[A] = LzCons(element, this)
+  override def #::(element: A): LzList[A] = LzCons(element, this)
 
-  override def ++(another: LzList[A]): LzList[A] = another
+  override infix def ++(another: => LzList[A]): LzList[A] = another
 
   override def foreach(f: A => Unit): Unit = ()
 
@@ -71,13 +71,20 @@ class LzCons[A](hd: => A, tl: => LzList[A]) extends LzList[A] {
 
   override lazy val tail: LzList[A] = tl
 
-  override infix def #::(element: A): LzList[A] = LzCons(element, this)
+  override def #::(element: A): LzList[A] = LzCons(element, this)
 
-  override infix def ++(another: LzList[A]): LzList[A] = LzCons(head, tail ++ another)
+  override infix def ++(another: => LzList[A]): LzList[A] = LzCons(head, tail ++ another)
 
   override def foreach(f: A => Unit): Unit = {
-    f(head)
-    tail.foreach(f)
+    @tailrec
+    def foreachTailRec(lzList: LzList[A]): Unit =
+      if (lzList.isEmpty) ()
+      else {
+        f(lzList.head)
+        foreachTailRec(lzList.tail)
+      }
+
+    foreachTailRec(this)
   }
 
   override def map[B](f: A => B): LzList[B] = LzCons(f(head), tail.map(f))
@@ -102,8 +109,37 @@ object LzList {
   def generate[A](start: A)(generator: A => A): LzList[A] =
     LzCons(start, LzList.generate(generator(start))(generator))
 
-  def from[A](list: List[A]): LzList[A] = list.foldLeft(LzList.empty) {
+  def from[A](list: List[A]): LzList[A] = list.reverse.foldLeft(LzList.empty) {
     (currentLzList, newElement) => LzCons(newElement, currentLzList)
+  }
+
+  def apply[A](values: A*) = LzList.from(values.toList)
+
+  def fibonacci: LzList[BigInt] = {
+    def go(first: BigInt, second: BigInt): LzList[BigInt] =
+      LzCons(first, go(second, first + second))
+
+    go(1, 2)
+  }
+
+  def eratosthenes: LzList[Int] = {
+    def isPrime(n: Int) = {
+      @tailrec
+      def go(potentialDivisor: Int): Boolean =
+        if (potentialDivisor < 2) true
+        else if (n % potentialDivisor == 0) false
+        else go(potentialDivisor - 1)
+
+      go(n / 2)
+    }
+
+    def sieve(numbers: LzList[Int]): LzList[Int] =
+      if (numbers.isEmpty) numbers
+      else if (!isPrime(numbers.head)) sieve(numbers.tail)
+      else LzCons(numbers.head, sieve(numbers.tail.filter(_ % numbers.head != 0)))
+
+    val natuaralsFrom2 = LzList.generate(2)(_ + 1)
+    sieve(natuaralsFrom2)
   }
 }
 
