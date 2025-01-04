@@ -1,7 +1,8 @@
 package com.rockthejvm.part3async
 
 import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.*
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Random, Success, Try}
 
 object Futures {
@@ -77,13 +78,16 @@ object Futures {
           case Success(friendProfile) => profile.sendMessage(friendProfile, message)
           case Failure(ex) => ex.printStackTrace()
         }
-      // TODO steps 2 & 3
       case Failure(ex) => ex.printStackTrace()
     }
   }
 
   // onComplete is a hassle
   // solution: functional composition
+  val janeProfileFuture = SocialNetwork.fetchProfile("rtjvm.id.2-jane")
+  val janeFuture: Future[String] = janeProfileFuture.map(profile => profile.name) // map transforms value contained inside, ASYNC
+  val janesBestFriend: Future[Profile] = janeProfileFuture.flatMap(profile => SocialNetwork.fetchBestFriend(profile))
+  val janesBestFriendFilter: Future[Profile] = janesBestFriend.filter(profile => profile.name.startsWith("Z"))
 
   def sendMessageToBestFriend_v2(accountId: String, message: String): Unit = {
     val profileFuture = SocialNetwork.fetchProfile(accountId)
@@ -113,13 +117,42 @@ object Futures {
 
   val fallbackProfile: Future[Profile] = SocialNetwork.fetchProfile("unknown id").fallbackTo(SocialNetwork.fetchProfile("rtjvm.id.0-dummy"))
 
-  val janeProfileFuture = SocialNetwork.fetchProfile("rtjvm.id.2-jane")
-  val janeFuture: Future[String] = janeProfileFuture.map(profile => profile.name) // map transforms value contained inside, ASYNC
-  val janesBestFriend: Future[Profile] = janeProfileFuture.flatMap(profile => SocialNetwork.fetchBestFriend(profile))
-  val janesBestFriendFilter: Future[Profile] = janesBestFriend.filter(profile => profile.name.startsWith("Z"))
+  /*
+    Block for a future
+   */
+
+  case class User(name: String)
+
+  case class Transaction(sender: String, receiver: String, amount: Double, status: String)
+
+  object BankingApp {
+    def fetchUser(name: String): Future[User] = Future {
+      Thread.sleep(500)
+      User(name)
+    }
+
+    def createTransaction(user: User, merchantName: String, amount: Double) = Future {
+      Thread.sleep(1000)
+      Transaction(user.name, merchantName, amount, "SUCCESS")
+    }
+
+    // external api
+    def purchase(userName: String, item: String, merchantName: String, price: Double): String = {
+      /*
+        1. fetch user
+        2. create transaction
+        3. WAIT for transaction to finish
+       */
+      val transactionStatusFuture: Future[String] = for {
+        user <- fetchUser(userName)
+        transaction <- createTransaction(user, merchantName, price)
+      } yield transaction.status
+
+      Await.result(transactionStatusFuture, 2.seconds) // throws TimeoutException if the future doesn't finish within 2s
+    }
+  }
 
   def main(args: Array[String]): Unit = {
-    println(futureInstantResult) // Inspect the value of the future right now
     Thread.sleep(2000)
     executor.shutdown()
   }
