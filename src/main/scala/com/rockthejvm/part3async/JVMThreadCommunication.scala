@@ -1,10 +1,7 @@
 package com.rockthejvm.part3async
 
-object JVMThreadCommunication {
-  def main(args: Array[String]): Unit = {
-    ProdConsV2.start()
-  }
-}
+import scala.collection.mutable
+import scala.util.Random
 
 // example: the producer-consumer problem
 
@@ -84,5 +81,67 @@ object ProdConsV2 {
 
     consumer.start()
     producer.start()
+  }
+}
+
+// insert a larger container
+// producer -> [_ _ _] -> consumer
+object ProdConsV3 {
+  def start(containerCapacity: Int): Unit = {
+    val buffer: mutable.Queue[Int] = new mutable.Queue[Int]
+
+    val consumer = new Thread(() => {
+      val random = new Random(System.nanoTime())
+
+      while (true) {
+        buffer.synchronized {
+          if (buffer.isEmpty) {
+            println("[consumer] buffer empty, waiting...")
+            buffer.wait()
+          }
+
+          // buffer must not be empty
+          val x = buffer.dequeue()
+          println(s"[consumer] I've just consumed $x")
+
+          // producer, give me more elements!
+          buffer.notify() // wake up the producer if it's asleep
+        }
+
+        Thread.sleep(random.nextInt(500))
+      }
+    })
+
+    val producer = new Thread(() => {
+      val random = new Random(System.nanoTime())
+      var counter = 0
+
+      while (true) {
+        buffer.synchronized {
+          if (buffer.size == containerCapacity) {
+            println("[producer] buffer full, waiting...")
+            buffer.wait()
+          }
+
+          val newElement = counter
+          counter += 1
+          println(s"[producer] I am producing $newElement")
+          buffer.enqueue(newElement)
+
+          // consumer, don't be lazy!
+          buffer.notify() // wakes up the consumer (if it's asleep)
+        }
+        Thread.sleep(random.nextInt(500))
+      }
+    })
+
+    consumer.start()
+    producer.start()
+  }
+}
+
+object JVMThreadCommunication {
+  def main(args: Array[String]): Unit = {
+    ProdConsV3.start(1)
   }
 }
