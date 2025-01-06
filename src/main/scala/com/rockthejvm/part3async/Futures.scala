@@ -1,8 +1,8 @@
 package com.rockthejvm.part3async
 
 import java.util.concurrent.Executors
+import scala.concurrent.*
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Random, Success, Try}
 
 object Futures {
@@ -25,10 +25,10 @@ object Futures {
   val futureInstantResult: Option[Try[Int]] = aFuture.value
 
   // callbacks
-  aFuture.onComplete {
-    case Success(value) => println(s"I've completed with the meaning of life: $value")
-    case Failure(exception) => println(s"My async computation failed: $exception")
-  } // on SOME other thread
+  //  aFuture.onComplete {
+  //    case Success(value) => println(s"I've completed with the meaning of life: $value")
+  //    case Failure(exception) => println(s"My async computation failed: $exception")
+  //  } // on SOME other thread
 
   /*
     Functional Composition
@@ -152,8 +152,92 @@ object Futures {
     }
   }
 
-  def main(args: Array[String]): Unit = {
-    Thread.sleep(2000)
-    executor.shutdown()
+  /*
+      Promises
+   */
+  def demoPromises(): Unit = {
+    val promise = Promise[Int]()
+    val futureInside: Future[Int] = promise.future
+
+    // thread 1 - "consumer": monitor the future for completion
+    futureInside.onComplete {
+      case Success(value) => println(s"[consumer] I've just been completed $value")
+      case Failure(exception) => exception.printStackTrace()
+    }
+
+    // thread 2 - "producer"
+    val producerThread = new Thread(() => {
+      println("Crunching numbers...")
+      Thread.sleep(1000)
+      // fulfil the promise
+      promise.success(42)
+      println("[producer] I'm done.")
+    })
+
+    producerThread.start()
+  }
+
+  /**
+   * Exercises
+   * 1) Fulfil a future IMMEDIATELY with a value
+   * 2) in sequence: make sure the first future has been completed before returning the second
+   * 3) first(fa, fb) => new Future with the value of the first future  to complete
+   * 4) last(fa, fb) => new Future with the value of the LAST future to complete
+   * 5) retry an action returning a Future until a predicate holds true
+   */
+
+  //1
+
+  def completeImmediately[A](value: A): Future[A] = Future(value)
+
+  def completeImmediately_v2[A](value: A): Future[A] = Future.successful(value)
+
+  //2
+  def inSequence[A, B](first: Future[A], second: Future[B]): Future[B] =
+    first.flatMap(_ => second)
+
+  //3
+  def first[A](fa: Future[A], fb: Future[A]): Future[A] = {
+    val p = Promise[A]()
+    fa.onComplete(result1 => p.tryComplete(result1))
+    fb.onComplete(result2 => p.tryComplete(result2))
+
+    p.future
+  }
+
+  //4
+  def last[A](fa: Future[A], fb: Future[A]): Future[A] =
+    val bothPromise = Promise[A]()
+    val lastPromise = Promise[A]()
+
+    def checkAndComplete(result: Try[A]): Unit = {
+      if (!bothPromise.tryComplete(result))
+        lastPromise.complete(result)
+    }
+
+    fa.onComplete(checkAndComplete)
+    fb.onComplete(checkAndComplete)
+
+    lastPromise.future
+
+  //    for {
+  //      _ <- fa
+  //      if fa.isCompleted
+  //    } yield promise.completeWith(fb)
+  //
+  //    for {
+  //      _ <- fb
+  //      if fb.isCompleted
+  //    } yield promise.completeWith(fa)
+  //
+  //    fa.flatMap(_ => fb.map(y => promise.trySuccess(y)))
+  //    fb.flatMap(_ => fa.map(y => promise.trySuccess(y)))
+  //5
+  def retryUntil[A](action: () => Future[A], predicate: A => Boolean): Future[A] = {
+    action()
+      .filter(predicate)
+      .recoverWith {
+        case _ => retryUntil(action, predicate)
+      }
   }
 }
