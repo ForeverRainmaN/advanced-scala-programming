@@ -20,3 +20,10 @@ local.sbt
 .gigaide
 .idea_modules
 /.worksheet/
+
+# VSCode
+.bloop
+.bsp
+.metals
+.vscode
+.project

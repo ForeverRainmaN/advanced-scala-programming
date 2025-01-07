@@ -73,15 +73,16 @@ object Recap {
   def throwSomeException(): Int =
     throw new RuntimeException
 
-  val aPotentialFailure: Any = try {
-    // code that may fail
-    throwSomeException()
-  } catch {
-    case e: Exception => "I caught an exception"
-  } finally {
-    // closing resources
-    println("Some important logs")
-  }
+  val aPotentialFailure: Any =
+    try {
+      // code that may fail
+      throwSomeException()
+    } catch {
+      case e: Exception => "I caught an exception"
+    } finally {
+      // closing resources
+      println("Some important logs")
+    }
 
   // functional programming
   val incrementer = new Function1[Int, Int] {
@@ -118,10 +119,10 @@ object Recap {
   }
 
   val bob = Person("Bob", 22)
-  
+
   val gereeting = bob match {
     case Person(n, _) => s"Hi, my name is $n"
-    case _ => "Not important"
+    case _            => "Not important"
   }
 
   // identation tokens
