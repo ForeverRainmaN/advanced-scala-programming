@@ -46,12 +46,12 @@ object OpaqueTypes {
   // 1 - companion objects
   val aName = Name("Daniel")
 
+  // 2 - extension methods
   val nameLength = aName.length
 
-  // 2 - extension methods
+
 
   def main(args: Array[String]): Unit = {
 
   }
-
 }
