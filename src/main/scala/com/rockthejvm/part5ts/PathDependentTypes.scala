@@ -1,6 +1,6 @@
 package com.rockthejvm.part5ts
 
-object PathDependedntTypes {
+object PathDependentTypes {
 
   class Outer {
     class Inner
